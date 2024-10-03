@@ -1,0 +1,14 @@
+/home/ninad/C#Chess/obj/Debug/net8.0/app.GeneratedMSBuildEditorConfig.editorconfig
+/home/ninad/C#Chess/obj/Debug/net8.0/app.AssemblyInfoInputs.cache
+/home/ninad/C#Chess/obj/Debug/net8.0/app.AssemblyInfo.cs
+/home/ninad/C#Chess/obj/Debug/net8.0/app.csproj.CoreCompileInputs.cache
+/home/ninad/C#Chess/bin/Debug/net8.0/app
+/home/ninad/C#Chess/bin/Debug/net8.0/app.deps.json
+/home/ninad/C#Chess/bin/Debug/net8.0/app.runtimeconfig.json
+/home/ninad/C#Chess/bin/Debug/net8.0/app.dll
+/home/ninad/C#Chess/bin/Debug/net8.0/app.pdb
+/home/ninad/C#Chess/obj/Debug/net8.0/app.dll
+/home/ninad/C#Chess/obj/Debug/net8.0/refint/app.dll
+/home/ninad/C#Chess/obj/Debug/net8.0/app.pdb
+/home/ninad/C#Chess/obj/Debug/net8.0/app.genruntimeconfig.cache
+/home/ninad/C#Chess/obj/Debug/net8.0/ref/app.dll

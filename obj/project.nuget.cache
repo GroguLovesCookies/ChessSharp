@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "p6+j3G9HlC02ns6lg24gapdsd0ujzWxJ2v5MzAmBVKXwvzJcvyO+4+0dQ9vFszgYf+kFdiE6Fd1kCDxkHKdy7Q==",
+  "success": true,
+  "projectFilePath": "/home/ninad/C#Chess/app.csproj",
+  "expectedPackageFiles": [
+    "/home/ninad/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.6/microsoft.aspnetcore.app.ref.8.0.6.nupkg.sha512"
+  ],
+  "logs": []
+}
