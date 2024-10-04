@@ -16,7 +16,7 @@ namespace Chess.Classes {
             DoublePush,
             EnPassant
         }
-        Board board = board;
+        public Board board = board;
         public readonly int start = start, end = end;
         public int pieceMoved = board.pieces.GetValueOrDefault(start);
         public int pieceTaken = board.pieces.GetValueOrDefault(end);

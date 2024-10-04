@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Chess.Bitboards;
 using Chess.ChessEngine;
 using Chess.Classes;
@@ -16,10 +17,8 @@ namespace Chess {
             Masks.Initialize();
             Engine engine = new(board);
 
-            MoveGenerator generator = new(board);
-            var sorted = Engine.SortMoves(generator.GenerateMoves(true));
-
             string input = "";
+            Stopwatch stopwatch = new();
             while(input != "q") {
                 Console.Write("Enter move: ");
                 input = Console.ReadLine();
@@ -27,8 +26,11 @@ namespace Chess {
                 made.MakeMove();
 
                 Move best = new(board, 0, 0);
+                stopwatch.Start();
                 engine.Search(6, -1000000000, 1000000000, ref best);
+                stopwatch.Stop();
                 Console.WriteLine(best.ToString());
+                Console.WriteLine(stopwatch.ElapsedMilliseconds);
                 best.MakeMove();
             }
         }

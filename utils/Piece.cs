@@ -40,7 +40,7 @@ namespace Chess.Utils {
             }
             output += temp;
             for(int i = 7; i < 64; i += 8) {
-                output = output.Insert(i, "\n");
+                output.Insert(i, "\n");
             }
             return output;
         }

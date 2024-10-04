@@ -34,6 +34,14 @@ namespace Chess.Classes {
 
         public ulong attackedSquares = 0;
         public Dictionary<int, int> pieces = [];
+        public Dictionary<int, ulong> attackedDict = new() {
+            ['p'.GetPieceValue()] = 0,
+            ['n'.GetPieceValue()] = 0,
+            ['b'.GetPieceValue()] = 0,
+            ['r'.GetPieceValue()] = 0,
+            ['q'.GetPieceValue()] = 0,
+            ['k'.GetPieceValue()] = 0,
+        };
         public Dictionary<int, ulong> whiteBitboards = new() {
             ['p'.GetPieceValue()] = 0,
             ['n'.GetPieceValue()] = 0,

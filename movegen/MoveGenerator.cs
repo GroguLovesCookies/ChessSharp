@@ -142,24 +142,49 @@ namespace Chess.MoveGen {
         }
 
         public ulong GetAttackMap(bool white) {
+            board.attackedDict['p'.GetPieceValue()] = 0;
+            board.attackedDict['n'.GetPieceValue()] = 0;
+            board.attackedDict['b'.GetPieceValue()] = 0;
+            board.attackedDict['r'.GetPieceValue()] = 0;
+            board.attackedDict['q'.GetPieceValue()] = 0;
+            board.attackedDict['k'.GetPieceValue()] = 0;
             ulong map = 0;
             foreach(KeyValuePair<int, int> piece in board.pieces) {
                 if(piece.Value.IsEmpty() || piece.Value.IsWhitePiece() != white)
                     continue;
 
+                ulong mask;
                 switch(piece.Value.GetPieceValue().GetPieceChar()) {
                     case 'p':
-                        map |= (white? Masks.whitePawnCaptures: Masks.blackPawnCaptures)[piece.Key]; break;
+                        mask = (white? Masks.whitePawnCaptures: Masks.blackPawnCaptures)[piece.Key];
+                        map |= mask; 
+                        board.attackedDict['p'.GetPieceValue()] |= mask;
+                        break;
                     case 'n':
-                        map |= Masks.knightMasks[piece.Key]; break;
+                        mask = Masks.knightMasks[piece.Key]; 
+                        map |= mask;
+                        board.attackedDict['n'.GetPieceValue()] |= mask;
+                        break;
                     case 'b':
-                        map |= GenerateSlidingMap(piece.Key, 'b'); break;
+                        mask = GenerateSlidingMap(piece.Key, 'b'); 
+                        map |= mask;
+                        board.attackedDict['b'.GetPieceValue()] |= mask;
+                        break;
                     case 'r':
-                        map |= GenerateSlidingMap(piece.Key, 'r'); break;
+                        mask = GenerateSlidingMap(piece.Key, 'r'); 
+                        map |= mask;
+                        board.attackedDict['r'.GetPieceValue()] |= mask;
+                        break;
                     case 'q':
-                        map |= GenerateSlidingMap(piece.Key, 'r') | GenerateSlidingMap(piece.Key, 'b'); break;
+                        mask = GenerateSlidingMap(piece.Key, 'b') | GenerateSlidingMap(piece.Key, 'r'); 
+                        map |= mask;
+                        board.attackedDict['q'.GetPieceValue()] |= mask;
+                        break;
                     case 'k':
-                        map |= Masks.kingMasks[piece.Key]; break;
+                        mask = Masks.kingMasks[piece.Key]; 
+                        map |= mask;
+                        board.attackedDict['k'.GetPieceValue()] |= mask;
+                        break;
                 }
             }
             return map;
@@ -235,8 +260,6 @@ namespace Chess.MoveGen {
             
             bool white = moves[0].WhiteMove;
             foreach(Move move in moves) {
-                if(move.ToString() == "a2a4")
-                    Console.Write("");
                 move.MakeMove();
                 ulong kingBitboard = board.GetBitboard(white, 'k');
                 ulong attacked = GetAttackMap(!move.WhiteMove);
