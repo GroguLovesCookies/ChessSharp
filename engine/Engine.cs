@@ -24,11 +24,11 @@ namespace Chess.ChessEngine {
 
         public int CountMaterial(bool white) {
             int material = 0;
-            foreach(KeyValuePair<int, int> piece in board.pieces) {
-                if(piece.Value.IsWhitePiece() == white) {
-                    material += GetPiecePoints(piece.Value);
-                }
-            }
+            material += board.pieceCounts[Pieces.GetPiece('p', white)] * pawnValue;
+            material += board.pieceCounts[Pieces.GetPiece('n', white)] * knightValue;
+            material += board.pieceCounts[Pieces.GetPiece('b', white)] * bishopValue;
+            material += board.pieceCounts[Pieces.GetPiece('r', white)] * rookValue;
+            material += board.pieceCounts[Pieces.GetPiece('q', white)] * queenValue;
             return material;
         }
 
@@ -54,7 +54,7 @@ namespace Chess.ChessEngine {
                 return GetPositionQuality();
 
             List<Move> moves = generator.GenerateMoves(board.white);
-            moves.Sort(CompareMoves);
+            IOrderedEnumerable<KeyValuePair<Move, int>> sorted = SortMoves(moves);
             if(moves.Count == 0) {
                 if(board.inCheck)
                     return int.MinValue;
@@ -63,15 +63,15 @@ namespace Chess.ChessEngine {
 
             Move discard = null;
 
-            foreach(Move move in moves) {
-                move.MakeMove();
+            foreach(KeyValuePair<Move, int> move in sorted) {
+                move.Key.MakeMove();
                 int eval = -Search(depth - 1, -beta, -alpha, ref discard);
-                move.UndoMove();
+                move.Key.UndoMove();
                 if(eval >= beta)
                     return beta;
                 if(alpha < eval) {
                     alpha = eval;
-                    output = move;
+                    output = move.Key;
                 }
             }
             return alpha;
@@ -89,6 +89,12 @@ namespace Chess.ChessEngine {
             return moveScore;
         }
 
-        public static int CompareMoves(Move a, Move b) => GetMoveScore(a) > GetMoveScore(b)? 1: GetMoveScore(a) < GetMoveScore(b)? -1: 0;
+        public static IOrderedEnumerable<KeyValuePair<Move, int>> SortMoves(List<Move> moves) {
+            Dictionary<Move, int> scores = new();
+            for(int i = 0; i < moves.Count; i++) {
+                scores[moves[i]] = GetMoveScore(moves[i]);
+            }
+            return scores.OrderBy(x => -x.Value);
+        }
     }
 }

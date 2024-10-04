@@ -12,3 +12,4 @@
 /home/ninad/C#Chess/obj/Debug/net8.0/app.pdb
 /home/ninad/C#Chess/obj/Debug/net8.0/app.genruntimeconfig.cache
 /home/ninad/C#Chess/obj/Debug/net8.0/ref/app.dll
+/home/ninad/C#Chess/obj/Debug/net8.0/app.sourcelink.json

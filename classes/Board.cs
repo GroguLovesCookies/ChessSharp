@@ -17,8 +17,23 @@ namespace Chess.Classes {
         public int[] kings = new int[2];
         public bool inCheck = false;
 
+        public Dictionary<int, int> pieceCounts = new() {
+            [Pieces.GetPiece('p', true)] = 0,
+            [Pieces.GetPiece('n', true)] = 0,
+            [Pieces.GetPiece('b', true)] = 0,
+            [Pieces.GetPiece('r', true)] = 0,
+            [Pieces.GetPiece('q', true)] = 0,
+            [Pieces.GetPiece('k', true)] = 0,
+            [Pieces.GetPiece('p', false)] = 0,
+            [Pieces.GetPiece('n', false)] = 0,
+            [Pieces.GetPiece('b', false)] = 0,
+            [Pieces.GetPiece('r', false)] = 0,
+            [Pieces.GetPiece('q', false)] = 0,
+            [Pieces.GetPiece('k', false)] = 0,
+        };
+
         public ulong attackedSquares = 0;
-        public Dictionary<int, int> pieces = new Dictionary<int, int>();
+        public Dictionary<int, int> pieces = [];
         public Dictionary<int, ulong> whiteBitboards = new() {
             ['p'.GetPieceValue()] = 0,
             ['n'.GetPieceValue()] = 0,
@@ -52,6 +67,7 @@ namespace Chess.Classes {
                     Dictionary<int, ulong> bitboards = GetBitboards(char.IsAsciiLetterUpper(chr));
                     bitboards[piece] |= 1ul << (63 - i);
                     pieces[63 - i] = piece | colour;
+                    pieceCounts[piece | colour]++;
                     if(char.ToLower(chr) == 'k')
                         kings[char.IsAsciiLetterUpper(chr)? 0: 1] = 63 - i;
                 }

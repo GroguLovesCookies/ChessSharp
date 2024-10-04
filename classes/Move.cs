@@ -129,28 +129,38 @@ namespace Chess.Classes {
                 bitboard[pieceMoved.GetPieceValue()] ^= mask;
                 board.pieces[end] = pieceMoved;
                 board.pieces.Remove(start);
-                if(pieceTaken > 0)
+                if(pieceTaken > 0) {
                     enemyBitboard[pieceTaken.GetPieceValue()] ^= 1ul << end;
+                    board.pieceCounts[pieceTaken]--;
+                }
 
                 if(type == MoveType.PromoteQueen) {
                     bitboard['q'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces[end] = 'q'.GetPieceValue() | colour;
+                    int piece = 'q'.GetPieceValue() | colour;
+                    board.pieces[end] = piece;
+                    board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.PromoteRook) {
                     bitboard['r'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces[end] = 'r'.GetPieceValue() | colour;
+                    int piece = 'r'.GetPieceValue() | colour;
+                    board.pieces[end] = piece;
+                    board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.PromoteBishop) {
                     bitboard['b'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces[end] = 'b'.GetPieceValue() | colour;
+                    int piece = 'b'.GetPieceValue() | colour;
+                    board.pieces[end] = piece;
+                    board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.PromoteKnight) {
                     bitboard['n'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces[end] = 'n'.GetPieceValue() | colour;
+                    int piece = 'n'.GetPieceValue() | colour;
+                    board.pieces[end] = piece;
+                    board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.DoublePush) {
                     int offset = WhiteMove? -8: 8;
@@ -162,6 +172,7 @@ namespace Chess.Classes {
                         int index = epSquare.Item2;
                         enemyBitboard['p'.GetPieceValue()] ^= 1ul << index;
                         board.pieces.Remove(index);
+                        board.pieceCounts[Pieces.GetPiece('p', !WhiteMove)]--;
                     }
                 }
 
@@ -229,34 +240,41 @@ namespace Chess.Classes {
                 if(type == MoveType.PromoteQueen) {
                     bitboard['q'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end);
+                    board.pieces.Remove(end, out int piece);
+                    board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.PromoteRook) {
                     bitboard['r'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end);
+                    board.pieces.Remove(end, out int piece);
+                    board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.PromoteBishop) {
                     bitboard['b'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end);
+                    board.pieces.Remove(end, out int piece);
+                    board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.PromoteKnight) {
                     bitboard['n'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end);
+                    board.pieces.Remove(end, out int piece);
+                    board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.EnPassant) {
                     (int, int) epSquare = board.epSquare;
                     if(epSquare.Item1 >= 0) {
                         int index = epSquare.Item2;
                         enemyBitboard['p'.GetPieceValue()] ^= 1ul << index;
-                        board.pieces[index] = Pieces.GetPiece('p', !WhiteMove);
+                        int piece = Pieces.GetPiece('p', !WhiteMove);;
+                        board.pieces[index] = piece;
+                        board.pieceCounts[piece]++;
                     }
                 }
                 if(pieceTaken > 0) {
                     enemyBitboard[pieceTaken.GetPieceValue()] ^= 1ul << end;
                     board.pieces[end] = pieceTaken;
+                    board.pieceCounts[pieceTaken]++;
                 }
 
                 if(pieceMoved.GetPieceValue().GetPieceChar() == 'k')
