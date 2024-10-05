@@ -20,7 +20,7 @@ namespace Chess.Classes {
         public readonly int start = start, end = end;
         public int pieceMoved = board.pieces.GetValueOrDefault(start);
         public int pieceTaken = board.pieces.GetValueOrDefault(end);
-        MoveType type = type;
+        public MoveType type = type;
         public bool WhiteMove => pieceMoved.GetPieceColor() == 0b01000;
         (int, int) StartSquare => start.ToSquare();
         (int, int) EndSquare => end.ToSquare();

@@ -12,6 +12,8 @@ namespace Chess.ChessEngine {
         public const int rookValue = 500;
         public const int queenValue = 900;
 
+        public static int swaps = 0;
+
         public int GetPositionQuality() {
             int whiteMaterial = CountMaterial(true);
             int blackMaterial = CountMaterial(false);
@@ -33,20 +35,15 @@ namespace Chess.ChessEngine {
         }
 
         public static int GetPiecePoints(int piece) {
-            switch(piece.GetPieceValue().GetPieceChar()) {
-                case 'p':
-                    return pawnValue;
-                case 'n':
-                    return knightValue;
-                case 'b':
-                    return bishopValue;
-                case 'r':
-                    return rookValue;
-                case 'q':
-                    return queenValue;
-                default:
-                    return 0;
-            }
+            return piece.GetPieceValue().GetPieceChar() switch
+            {
+                'p' => pawnValue,
+                'n' => knightValue,
+                'b' => bishopValue,
+                'r' => rookValue,
+                'q' => queenValue,
+                _ => 0,
+            };
         }
 
         public int Search(int depth, int alpha, int beta, ref Move output) {
@@ -59,11 +56,12 @@ namespace Chess.ChessEngine {
                     return int.MinValue;
                 return 0;
             }
-            (Move, int)[] sorted = SortMoves(moves);
+            List<int> sorted = SortMoves(moves);
 
             Move discard = null;
 
-            foreach((Move move, int _) in sorted) {
+            foreach(int i in sorted) {
+                Move move = moves[i];
                 move.MakeMove();
                 int eval = -Search(depth - 1, -beta, -alpha, ref discard);
                 move.UndoMove();
@@ -86,47 +84,73 @@ namespace Chess.ChessEngine {
 
             if(move.IsPromotion)
                 moveScore += GetPiecePoints(move.PromotesTo);
-                
+
             return moveScore;
         }
 
-        public static (Move, int)[] SortMoves(List<Move> moves) {
-            (Move, int)[] scores = new (Move, int)[moves.Count];
-            for(int i = 0; i < moves.Count; i++) {
-                scores[i] = (moves[i], GetMoveScore(moves[i]));
+        public static List<int> SortMoves(List<Move> moves) {
+            List<int> moveScores = new(moves.Count);
+            List<int> indices = new(moves.Count);
+            
+            int startInsertIndex = 0;
+            int zeroCount = 0;
+            int i = 0;
+            foreach(Move move in moves) {
+                int score = GetMoveScore(move);
+                if(score > 0) {
+                    indices.Insert(0, i);
+                    startInsertIndex++;
+                }
+                else if(score < 0) {
+                    indices.Add(i);
+                }
+                else {
+                    indices.Insert(startInsertIndex, i);
+                    zeroCount++;
+                }
+                i++;
+                moveScores.Add(score);
             }
-            QuickSort(scores, 0, moves.Count-1, i => -i.Item2);
-            return scores;
+            DualPivotQuicksortYaroslavskiy(indices, 0, startInsertIndex - 1, i => -moveScores[i]);
+            DualPivotQuicksortYaroslavskiy(indices, startInsertIndex + zeroCount, moves.Count - 1, i => -moveScores[i]);
+            return indices;
         }
 
-        public static void QuickSort<T>(T[] data, int left, int right, Func<T, int> key) {
-            var i = left;
-            var j = right;
-            var pivot = key(data[left]);
-            while (i <= j)
-            {
-                while (key(data[i]) < pivot)
-                {
-                    i++;
-                }
-                
-                while (key(data[j]) > pivot)
-                {
-                    j--;
-                }
-                if (i <= j)
-                {
-                    (data[i], data[j]) = (data[j], data[i]);
-                    i++;
-                    j--;
-                }
+        public static void DualPivotQuicksortYaroslavskiy<T>(List<T> data, int left, int right, Func<T, int> key) {
+            if(left >= right)
+                return;
+            int p = key(data[left]), q = key(data[right]);
+            if(p > q) {
+                (data[left], data[right]) = (data[right], data[left]);
+                (p, q) = (q, p);
             }
-            
-            if (left < j)
-                QuickSort(data, left, j, key);
-            if (i < right)
-                QuickSort(data, i, right, key);
-            return;
+
+            int l = left + 1, k = l, g = right - 1;
+            while(k <= g) {
+                if(key(data[k]) < p) {
+                    (data[k], data[l]) = (data[l], data[k]);
+                    l++;
+                }
+                else {
+                    if(key(data[k]) > q) {
+                        while(key(data[g]) > q && k < g)
+                            g--;
+                        (data[k], data[g]) = (data[g], data[k]);
+                        g--;
+                        if(key(data[k]) < p) {
+                            (data[k], data[l]) = (data[l], data[k]);
+                            l++;
+                        }
+                    }
+                }
+                k++;
+            }
+            l--; g++;
+            (data[left], data[l]) = (data[l], data[left]);
+            (data[right], data[g]) = (data[g], data[right]);
+            DualPivotQuicksortYaroslavskiy(data, left, l-1, key);
+            DualPivotQuicksortYaroslavskiy(data, l+1, g-1, key);
+            DualPivotQuicksortYaroslavskiy(data, g+1, right, key);
         }
     }
 }
