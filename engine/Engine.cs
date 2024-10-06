@@ -1,16 +1,22 @@
 using Chess.Classes;
 using Chess.MoveGen;
 using Chess.Utils;
+using Chess.Zobrist;
 
 namespace Chess.ChessEngine {
     public class Engine(Board board) {
         readonly Board board = board;
         readonly MoveGenerator generator = new(board);
+        readonly TranspositionTable tt = new(board, 64);
         public const int pawnValue = 100;
-        public const int knightValue = 300;
-        public const int bishopValue = 300;
+        public const int knightValue = 320;
+        public const int bishopValue = 330;
         public const int rookValue = 500;
         public const int queenValue = 900;
+
+        public const int winningCapture = 8000000;
+        public const int losingCapture = 2000000;
+        public const int promoteBias = 6000000;
 
         public static int swaps = 0;
 
@@ -46,7 +52,13 @@ namespace Chess.ChessEngine {
             };
         }
 
-        public int Search(int depth, int alpha, int beta, ref Move output) {
+        public int Search(int depth, int alpha, int beta, ref Move output, int plyFromRoot = 0) {
+            int ttVal = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
+            if(ttVal >= 0) {
+                return ttVal;
+            }
+
+
             if(depth == 0)
                 return GetPositionQuality();
 
@@ -60,18 +72,25 @@ namespace Chess.ChessEngine {
 
             Move discard = null;
 
+            int evalType = 1;
+
             foreach(int i in sorted) {
                 Move move = moves[i];
                 move.MakeMove();
-                int eval = -Search(depth - 1, -beta, -alpha, ref discard);
+                int eval = -Search(depth - 1, -beta, -alpha, ref discard, plyFromRoot+1);
                 move.UndoMove();
-                if(eval >= beta)
+                if(eval >= beta) {
+                    tt.StoreEval(depth, plyFromRoot, beta, 2, move);
                     return beta;
+                }
                 if(alpha < eval) {
+                    evalType = 0;
                     alpha = eval;
                     output = move;
                 }
             }
+
+            tt.StoreEval(depth, plyFromRoot, alpha, evalType, output);
             return alpha;
         }
 
@@ -79,11 +98,13 @@ namespace Chess.ChessEngine {
             int moveScore = 0;
 
             if(move.pieceTaken != 0) {
-                moveScore = 10 * GetPiecePoints(move.pieceTaken) - GetPiecePoints(move.pieceMoved);
+                int delta = GetPiecePoints(move.pieceTaken) - GetPiecePoints(move.pieceMoved);
+                bool recapture = (move.board.attackedSquares & (1ul << move.end)) > 0;
+                moveScore += (recapture && delta >= 0)? winningCapture: losingCapture + delta;
             }
 
             if(move.IsPromotion)
-                moveScore += GetPiecePoints(move.PromotesTo);
+                moveScore += promoteBias + GetPiecePoints(move.PromotesTo);
 
             return moveScore;
         }

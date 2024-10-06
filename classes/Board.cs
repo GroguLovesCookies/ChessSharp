@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using Chess.Utils;
+using Chess.Zobrist;
 
 namespace Chess.Classes {
     public class Board {
@@ -16,6 +17,7 @@ namespace Chess.Classes {
 
         public int[] kings = new int[2];
         public bool inCheck = false;
+        public ulong zobrist = 0;
 
         public Dictionary<int, int> pieceCounts = new() {
             [Pieces.GetPiece('p', true)] = 0,
@@ -76,6 +78,7 @@ namespace Chess.Classes {
                     bitboards[piece] |= 1ul << (63 - i);
                     pieces[63 - i] = piece | colour;
                     pieceCounts[piece | colour]++;
+                    zobrist |= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece | colour, 63 - i)];
                     if(char.ToLower(chr) == 'k')
                         kings[char.IsAsciiLetterUpper(chr)? 0: 1] = 63 - i;
                 }

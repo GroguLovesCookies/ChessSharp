@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Chess.ChessEngine;
 using Chess.MoveGen;
 using Chess.Utils;
+using Chess.Zobrist;
 
 namespace Chess.Classes {
     public class Move(Board board, int start, int end, Move.MoveType type = Move.MoveType.None) {
@@ -100,8 +101,11 @@ namespace Chess.Classes {
             
                 board.pieces.Remove(start, out int king);
                 board.pieces[start + 2] = king;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start + 2)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start)];
+
                 board.pieces.Remove(start + 4, out int rook);
                 board.pieces[start + 1] = rook;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start + 1)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start + 4)];
 
                 board.kings[WhiteMove? 0: 1] = start + 2;
 
@@ -116,8 +120,12 @@ namespace Chess.Classes {
 
                 board.pieces.Remove(start, out int king);
                 board.pieces[start - 2] = king;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start - 2)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start)];
+
+
                 board.pieces.Remove(start - 3, out int rook);
                 board.pieces[start - 1] = rook;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start - 3)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start - 1)];
 
                 board.kings[WhiteMove? 0: 1] = start - 2;
 
@@ -129,9 +137,11 @@ namespace Chess.Classes {
                 bitboard[pieceMoved.GetPieceValue()] ^= mask;
                 board.pieces[end] = pieceMoved;
                 board.pieces.Remove(start);
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, start)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, end)];
                 if(pieceTaken > 0) {
                     enemyBitboard[pieceTaken.GetPieceValue()] ^= 1ul << end;
                     board.pieceCounts[pieceTaken]--;
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceTaken, end)];
                 }
 
                 if(type == MoveType.PromoteQueen) {
@@ -139,6 +149,7 @@ namespace Chess.Classes {
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'q'.GetPieceValue() | colour;
                     board.pieces[end] = piece;
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.PromoteRook) {
@@ -146,6 +157,7 @@ namespace Chess.Classes {
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'r'.GetPieceValue() | colour;
                     board.pieces[end] = piece;
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.PromoteBishop) {
@@ -153,6 +165,7 @@ namespace Chess.Classes {
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'b'.GetPieceValue() | colour;
                     board.pieces[end] = piece;
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.PromoteKnight) {
@@ -160,6 +173,7 @@ namespace Chess.Classes {
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'n'.GetPieceValue() | colour;
                     board.pieces[end] = piece;
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
                 }
                 else if(type == MoveType.DoublePush) {
@@ -215,8 +229,11 @@ namespace Chess.Classes {
 
                 board.pieces.Remove(start + 2, out int king);
                 board.pieces[start] = king;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start + 2)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start)];
+
                 board.pieces.Remove(start + 1, out int rook);
                 board.pieces[start + 4] = rook;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start + 1)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start + 4)];
             }
             else if(type == MoveType.ShortCastle) {
                 ulong mask = 1ul << (start - 2) | 1ul << start;
@@ -228,37 +245,45 @@ namespace Chess.Classes {
 
                 board.pieces.Remove(start - 2, out int king);
                 board.pieces[start] = king;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start - 2)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(king, start)];
+
                 board.pieces.Remove(start - 1, out int rook);
                 board.pieces[start - 3] = rook;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start - 3)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(rook, start - 1)];
             }
             else {
                 ulong mask = 1ul << start | 1ul << end;
                 bitboard[pieceMoved.GetPieceValue()] ^= mask;
                 board.pieces.Remove(end);
                 board.pieces[start] = pieceMoved;
+                board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, start)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, end)];
 
                 if(type == MoveType.PromoteQueen) {
                     bitboard['q'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end, out int piece);
+                    int piece = Pieces.GetPiece('q', WhiteMove);
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.PromoteRook) {
                     bitboard['r'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end, out int piece);
+                    int piece = Pieces.GetPiece('r', WhiteMove);
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.PromoteBishop) {
                     bitboard['b'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end, out int piece);
+                    int piece = Pieces.GetPiece('b', WhiteMove);
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.PromoteKnight) {
                     bitboard['n'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
-                    board.pieces.Remove(end, out int piece);
+                    int piece = Pieces.GetPiece('n', WhiteMove);
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
                 else if(type == MoveType.EnPassant) {
@@ -275,6 +300,7 @@ namespace Chess.Classes {
                     enemyBitboard[pieceTaken.GetPieceValue()] ^= 1ul << end;
                     board.pieces[end] = pieceTaken;
                     board.pieceCounts[pieceTaken]++;
+                    board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceTaken, end)];
                 }
 
                 if(pieceMoved.GetPieceValue().GetPieceChar() == 'k')
