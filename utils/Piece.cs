@@ -2,30 +2,24 @@ using System;
 
 namespace Chess.Utils {
     public static class Pieces {
+        public static int getPieceCalls = 0;
+        public static readonly int[] pieceArray = new int[17];
+        public static char[] pieceToChar = ['p', 'n', 'b', 'r', 'q', 'k'];
+
+        public static void InitializePieces() {
+            pieceArray['p' - 'b'] = 0b0001;
+            pieceArray['n' - 'b'] = 0b0010;
+            pieceArray['b' - 'b'] = 0b0011;
+            pieceArray['r' - 'b'] = 0b0100;
+            pieceArray['q' - 'b'] = 0b0101;
+            pieceArray['k' - 'b'] = 0b0110;
+        }
         public static int GetPieceValue(this char piece) {
-            return piece switch
-            {
-                'p' => 0b00001,
-                'n' => 0b00010,
-                'b' => 0b00011,
-                'r' => 0b00100,
-                'q' => 0b00101,
-                'k' => 0b00110,
-                _ => 0b00000,
-            };
+            return pieceArray[piece - 'b'];
         }
 
         public static char GetPieceChar(this int piece) {
-            return piece switch
-            {
-                0b00001 => 'p',
-                0b00010 => 'n',
-                0b00011 => 'b',
-                0b00100 => 'r',
-                0b00101 => 'q',
-                0b00110 => 'k',
-                _ => ' ',
-            };
+            return pieceToChar[piece - 1];
         }
 
         public static int GetPiece(char piece, bool white) {

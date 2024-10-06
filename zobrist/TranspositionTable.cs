@@ -20,8 +20,8 @@ namespace Chess.Zobrist {
 
         public ulong Index => board.zobrist % count; 
 
-        public int LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta) {
-            Entry entry = entries[Index];
+        public int LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta, out Entry entry) {
+            entry = entries[Index];
             if(entry.key == board.zobrist) {
                 if(entry.depth >= depth) {
                     if(entry.type == 0 || (entry.type == 1 && entry.value <= alpha) || (entry.type == 2 && entry.value >= beta))

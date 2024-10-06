@@ -1,4 +1,5 @@
 using Chess.Bitboards;
+using Chess.ChessEngine;
 using Chess.Classes;
 using Chess.Utils;
 
@@ -12,7 +13,7 @@ namespace Chess.MoveGen {
             knightMask &= ~blockerBitboard;
 
             knightMask = FilterPieceMoves(knightMask, start);
-            return knightMask.BitboardToMoveArray(board, start);
+            return knightMask.BitboardToMoveArray(board, start, start-17, start-15, start-10, start-6, start+10, start+6, start+17, start+15);
         }
 
         public List<Move> GenerateKingMoves(int start) {
@@ -20,7 +21,7 @@ namespace Chess.MoveGen {
             ulong blockerBitboard = board.GetBitboard(board.pieces[start].IsWhitePiece()) | board.attackedSquares;
             kingMask &= ~blockerBitboard;
 
-            List<Move> moves = kingMask.BitboardToMoveArray(board, start);
+            List<Move> moves = kingMask.BitboardToMoveArray(board, start, start-9, start-8, start-7, start-1, start+1, start+7, start+8, start+9);
             if(board.inCheck)
                 return moves;
 
@@ -61,12 +62,17 @@ namespace Chess.MoveGen {
 
         public List<Move> GenerateSlidingMoves(int start, char pieceType = 'r') {
             ulong output = GenerateSlidingMap(start, pieceType);
-            if(pieceType == 'q')
+            (int, int) range = pieceType == 'r'? Masks.rookRange[start]: Masks.bishopRange[start];
+            if(pieceType == 'q') {
                 output |= GenerateSlidingMap(start, 'r');
+                range.Item1 = Math.Min(range.Item1, Masks.rookRange[start].Item1);
+                range.Item2 = Math.Max(range.Item2, Masks.rookRange[start].Item2);
+            }
+
             ulong bitboard = board.GetBitboard(board.pieces[start].IsWhitePiece());
             output &= ~bitboard;
             output = FilterPieceMoves(output, start);
-            return output.BitboardToMoveArray(board, start);
+            return output.BitboardToMoveArray(board, start, range.Item1, range.Item2+1);
         }
 
         public List<Move> GeneratePawnMoves(int start, out bool doFilter) {
@@ -89,7 +95,7 @@ namespace Chess.MoveGen {
             doFilter = (captures & (1ul << board.epSquare.Item1)) > 0;
 
             output = FilterPieceMoves(output, start);
-            List<Move> moves = output.BitboardToPawnMoveArray(board, start);
+            List<Move> moves = output.BitboardToPawnMoveArray(board, start, start+7, start+8, start+9, start+16, start-7, start-8, start-9, start-16);
 
             return moves;
         }

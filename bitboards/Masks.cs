@@ -11,11 +11,12 @@ namespace Chess.Bitboards {
         public static readonly ulong[] blackPawnMasks = new ulong[64];
         public static readonly ulong[] whitePawnCaptures = new ulong[64];
         public static readonly ulong[] blackPawnCaptures = new ulong[64];
-        public static readonly ulong[] inFrontMasks = new ulong[8];
         public static readonly int[,] distances =  new int[64, 8];
         public static readonly int[] offsets = [-1, -8, 1, 8, -9, -7, 9, 7];
         public static readonly Dictionary<(int, ulong), ulong> rookTable = []; 
+        public static readonly (int, int)[] rookRange = new (int, int)[64];
         public static readonly Dictionary<(int, ulong), ulong> bishopTable = []; 
+        public static readonly (int, int)[] bishopRange = new (int, int)[64];
         public const ulong kingsideCastleMask = 0b00000110;
         public const ulong queensideCastleMask = 0b01110000;
         public const ulong castleKingMask = 0b00001000;
@@ -104,6 +105,7 @@ namespace Chess.Bitboards {
         public static void GetSlidingMask(char piece = 'r') {
             int start = piece == 'r'? 0: 4, end = piece == 'r'? 4: 8;
             for(int i = 0; i < 64; i++) {
+                int min = 65, max = -1;
                 ulong output = 0;
                 for(int j = start; j < end; j++) {
                     int offset = offsets[j];
@@ -111,12 +113,18 @@ namespace Chess.Bitboards {
 
                     for(int t = 1; t < distance; t++) {
                         output |= 1ul << (i + t * offset);
+                        min = Math.Min(i + t * offset, min);
+                        max = Math.Max(i + t * offset, max);
                     }
                 }
-                if(piece == 'r')
+                if(piece == 'r') {
                     rookMasks[i] = output;
-                else
+                    rookRange[i] = (min, max);
+                }
+                else {
                     bishopMasks[i] = output;
+                    bishopRange[i] = (min, max);
+                }
             }
         }
 

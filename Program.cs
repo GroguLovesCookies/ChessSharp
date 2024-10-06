@@ -12,6 +12,7 @@ using Chess.Zobrist;
 namespace Chess {
     public class MainClass {
         public static void Main(string[] args) {
+            Pieces.InitializePieces();
             ZobristHashing.InitZobrist();
             Board board = new("rnbq1k1r/pp1Pbppp/2p5/8/2B3n1/8/PPP1N1PP/RNBQK2R") {
                 castling = [true, true, false, false],
@@ -25,11 +26,6 @@ namespace Chess {
             MoveGenerator generator = new(board);
 
             Stopwatch stopwatch = new();
-            
-            // var moves = generator.GenerateMoves(true);
-            // foreach(int i in Engine.SortMoves(moves)) {
-            //     Console.WriteLine($"{moves[i]}");
-            // }
 
             while(input != "q") {
                 Console.Write("Enter move: ");
@@ -37,14 +33,12 @@ namespace Chess {
                 Move made = new(board, input);
                 made.MakeMove();
 
-                Move best = new(board, 0, 0);
                 stopwatch.Start();
-                engine.Search(6, -1000000000, 1000000000, ref best);
+                engine.Search(8, -1000000000, 1000000000);
                 stopwatch.Stop();
-                Console.WriteLine(best.ToString());
-                // Console.WriteLine(Engine.swaps);
+                Console.WriteLine(engine.bestMove.ToString());
                 Console.WriteLine(stopwatch.ElapsedMilliseconds);
-                best.MakeMove();
+                engine.bestMove.MakeMove();
             }
         }
     }

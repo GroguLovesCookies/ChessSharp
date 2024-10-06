@@ -18,7 +18,9 @@ namespace Chess.ChessEngine {
         public const int losingCapture = 2000000;
         public const int promoteBias = 6000000;
 
-        public static int swaps = 0;
+        public static readonly int[] piecePoints = [0, 100, 320, 330, 500, 900, 0];
+
+        public Move bestMove;
 
         public int GetPositionQuality() {
             int whiteMaterial = CountMaterial(true);
@@ -41,20 +43,14 @@ namespace Chess.ChessEngine {
         }
 
         public static int GetPiecePoints(int piece) {
-            return piece.GetPieceValue().GetPieceChar() switch
-            {
-                'p' => pawnValue,
-                'n' => knightValue,
-                'b' => bishopValue,
-                'r' => rookValue,
-                'q' => queenValue,
-                _ => 0,
-            };
+            return piecePoints[piece.GetPieceValue()];
         }
 
-        public int Search(int depth, int alpha, int beta, ref Move output, int plyFromRoot = 0) {
-            int ttVal = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta);
+        public int Search(int depth, int alpha, int beta, int plyFromRoot = 0) {
+            int ttVal = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta, out TranspositionTable.Entry entry);
             if(ttVal >= 0) {
+                if(plyFromRoot == 0)
+                    bestMove = entry.move;
                 return ttVal;
             }
 
@@ -70,14 +66,12 @@ namespace Chess.ChessEngine {
             }
             List<int> sorted = SortMoves(moves);
 
-            Move discard = null;
-
             int evalType = 1;
 
             foreach(int i in sorted) {
                 Move move = moves[i];
                 move.MakeMove();
-                int eval = -Search(depth - 1, -beta, -alpha, ref discard, plyFromRoot+1);
+                int eval = -Search(depth - 1, -beta, -alpha, plyFromRoot+1);
                 move.UndoMove();
                 if(eval >= beta) {
                     tt.StoreEval(depth, plyFromRoot, beta, 2, move);
@@ -86,11 +80,12 @@ namespace Chess.ChessEngine {
                 if(alpha < eval) {
                     evalType = 0;
                     alpha = eval;
-                    output = move;
+                    if(plyFromRoot == 0)
+                        bestMove = move;
                 }
             }
 
-            tt.StoreEval(depth, plyFromRoot, alpha, evalType, output);
+            tt.StoreEval(depth, plyFromRoot, alpha, evalType, bestMove);
             return alpha;
         }
 
