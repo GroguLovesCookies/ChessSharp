@@ -12,7 +12,7 @@ namespace Chess.Zobrist {
         {
             this.board = board;
 
-			int numEntries = 75000;
+			int numEntries = 250000;
 
 			count = (ulong)(numEntries);
 			entries = new Entry[numEntries];

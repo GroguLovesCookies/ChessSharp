@@ -74,6 +74,12 @@ namespace Chess.Classes {
             pieceTaken = board.pieces.GetValueOrDefault(end);
         }
 
+        public override bool Equals(object? obj)
+        {
+            Move move = (Move)obj;
+            return end == move.end && start == move.start && pieceTaken == move.pieceTaken && pieceMoved == move.pieceMoved;
+        }
+
         public void MakeMove(bool updateDict = true) {
             if(pieceMoved.GetPieceValue() == 'p'.GetPieceValue() && end == board.epSquare.Item1)
                 type = MoveType.EnPassant;

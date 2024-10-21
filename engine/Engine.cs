@@ -21,6 +21,10 @@ namespace Chess.ChessEngine {
         public static readonly int[] piecePoints = [0, 100, 320, 330, 500, 900, 0];
 
         public Move bestMove;
+        public Move oldBestMove;
+        public List<Move> killerMoves = [];
+
+        public static int pruned = 0;
 
         public int GetPositionQuality() {
             int whiteMaterial = CountMaterial(true);
@@ -47,12 +51,15 @@ namespace Chess.ChessEngine {
         }
 
         public int Search(int depth, int alpha, int beta, int plyFromRoot = 0) {
+            pruned++;
             int ttVal = tt.LookupEvaluation(depth, plyFromRoot, alpha, beta, out TranspositionTable.Entry entry);
             if(ttVal >= 0) {
                 if(plyFromRoot == 0)
                     bestMove = entry.move;
                 return ttVal;
             }
+
+            Move? localBestMove = null;
 
 
             if(depth == 0)
@@ -80,16 +87,18 @@ namespace Chess.ChessEngine {
                 if(alpha < eval) {
                     evalType = 0;
                     alpha = eval;
-                    if(plyFromRoot == 0)
-                        bestMove = move;
+                    localBestMove = move;
                 }
             }
+            if(plyFromRoot == 0 && localBestMove != null)
+                bestMove = localBestMove;
 
-            tt.StoreEval(depth, plyFromRoot, alpha, evalType, bestMove);
+            if(localBestMove != null)
+                tt.StoreEval(depth, plyFromRoot, alpha, evalType, localBestMove);
             return alpha;
         }
 
-        public static int GetMoveScore(Move move) {
+        public int GetMoveScore(Move move) {
             int moveScore = 0;
 
             if(move.pieceTaken != 0) {
@@ -101,10 +110,14 @@ namespace Chess.ChessEngine {
             if(move.IsPromotion)
                 moveScore += promoteBias + GetPiecePoints(move.PromotesTo);
 
+            if(((1ul << move.end) & board.attackedDict['p'.GetPieceValue()]) > 0) {
+                moveScore -= 700 * GetPiecePoints(move.pieceMoved);
+            }
+
             return moveScore;
         }
 
-        public static List<int> SortMoves(List<Move> moves) {
+        public List<int> SortMoves(List<Move> moves) {
             List<int> moveScores = new(moves.Count);
             List<int> indices = new(moves.Count);
             

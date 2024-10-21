@@ -15,8 +15,7 @@ namespace Chess {
             Pieces.InitializePieces();
             ZobristHashing.InitZobrist();
             Board board = new("rnbq1k1r/pp1Pbppp/2p5/8/2B3n1/8/PPP1N1PP/RNBQK2R") {
-                castling = [true, true, false, false],
-                white = false
+                castling = [true, true, false, false]
             };
 
             Masks.Initialize();
@@ -34,9 +33,10 @@ namespace Chess {
                 made.MakeMove();
 
                 stopwatch.Start();
-                engine.Search(8, -1000000000, 1000000000);
+                engine.Search(6, -1000000000, 1000000000);
                 stopwatch.Stop();
                 Console.WriteLine(engine.bestMove.ToString());
+                Console.WriteLine(Engine.pruned);
                 Console.WriteLine(stopwatch.ElapsedMilliseconds);
                 engine.bestMove.MakeMove();
             }
