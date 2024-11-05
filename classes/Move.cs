@@ -80,7 +80,7 @@ namespace Chess.Classes {
             return end == move.end && start == move.start && pieceTaken == move.pieceTaken && pieceMoved == move.pieceMoved;
         }
 
-        public void MakeMove(bool updateDict = true) {
+        public void MakeMove() {
             if(pieceMoved.GetPieceValue() == 'p'.GetPieceValue() && end == board.epSquare.Item1)
                 type = MoveType.EnPassant;
             board.ResetRights();
@@ -99,10 +99,16 @@ namespace Chess.Classes {
             Dictionary<int, ulong> enemyBitboard = board.GetBitboards(!WhiteMove);
             int colour = WhiteMove? 0b01000: 0b10000;
 
+            board.SetLastMoved(WhiteMove, end);
+
             if(type == MoveType.LongCastle) {
                 ulong mask = 1ul << (start + 2) | 1ul << start;
                 bitboard['k'.GetPieceValue()] ^= mask;
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start));
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start+2));
                 ulong rookMask = 1ul << (start + 1) | 1ul << (start + 4);
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start+4));
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start+1));
                 bitboard['r'.GetPieceValue()] ^= rookMask;
             
                 board.pieces.Remove(start, out int king);
@@ -121,8 +127,12 @@ namespace Chess.Classes {
             else if(type == MoveType.ShortCastle) {
                 ulong mask = 1ul << (start - 2) | 1ul << start;
                 bitboard['k'.GetPieceValue()] ^= mask;
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start));
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start-2));
                 ulong rookMask = 1ul << (start - 1) | 1ul << (start - 3);
                 bitboard['r'.GetPieceValue()] ^= rookMask;
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start-3));
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start-1));
 
                 board.pieces.Remove(start, out int king);
                 board.pieces[start - 2] = king;
@@ -142,11 +152,14 @@ namespace Chess.Classes {
                 ulong mask = 1ul << start | 1ul << end;
                 bitboard[pieceMoved.GetPieceValue()] ^= mask;
                 board.pieces[end] = pieceMoved;
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(pieceMoved, start));
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(pieceMoved, end));
                 board.pieces.Remove(start);
                 board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, start)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, end)];
                 if(pieceTaken > 0) {
                     enemyBitboard[pieceTaken.GetPieceValue()] ^= 1ul << end;
                     board.pieceCounts[pieceTaken]--;
+                    board.ChangeQuality(!WhiteMove, -Engine.GetSquarePoints(pieceTaken, end));
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceTaken, end)];
                 }
 
@@ -154,6 +167,8 @@ namespace Chess.Classes {
                     bitboard['q'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'q'.GetPieceValue() | colour;
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('q', WhiteMove), end));
                     board.pieces[end] = piece;
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
@@ -162,6 +177,8 @@ namespace Chess.Classes {
                     bitboard['r'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'r'.GetPieceValue() | colour;
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), end));
                     board.pieces[end] = piece;
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
@@ -170,6 +187,8 @@ namespace Chess.Classes {
                     bitboard['b'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'b'.GetPieceValue() | colour;
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('b', WhiteMove), end));
                     board.pieces[end] = piece;
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
@@ -178,6 +197,8 @@ namespace Chess.Classes {
                     bitboard['n'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = 'n'.GetPieceValue() | colour;
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('n', WhiteMove), end));
                     board.pieces[end] = piece;
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]++;
@@ -193,6 +214,7 @@ namespace Chess.Classes {
                         enemyBitboard['p'.GetPieceValue()] ^= 1ul << index;
                         board.pieces.Remove(index);
                         board.pieceCounts[Pieces.GetPiece('p', !WhiteMove)]--;
+                        board.ChangeQuality(!WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('p', !WhiteMove), index));
                     }
                 }
 
@@ -225,11 +247,17 @@ namespace Chess.Classes {
             Dictionary<int, ulong> bitboard = board.GetBitboards(WhiteMove);
             Dictionary<int, ulong> enemyBitboard = board.GetBitboards(!WhiteMove);
 
+            board.ResetLastMoved(WhiteMove);
+
             if(type == MoveType.LongCastle) {
                 ulong mask = 1ul << (start + 2) | 1ul << start;
                 bitboard['k'.GetPieceValue()] ^= mask;
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start));
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start+2));
                 ulong rookMask = 1ul << (start + 1) | 1ul << (start + 4);
                 bitboard['r'.GetPieceValue()] ^= rookMask;
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start+4));
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start+1));
                 
                 board.kings[WhiteMove? 0: 1] = start;
 
@@ -244,8 +272,12 @@ namespace Chess.Classes {
             else if(type == MoveType.ShortCastle) {
                 ulong mask = 1ul << (start - 2) | 1ul << start;
                 bitboard['k'.GetPieceValue()] ^= mask;
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start));
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('k', WhiteMove), start-2));
                 ulong rookMask = 1ul << (start - 1) | 1ul << (start - 3);
                 bitboard['r'.GetPieceValue()] ^= rookMask;
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start-3));
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), start-1));
 
                 board.kings[WhiteMove? 0: 1] = start;
 
@@ -263,11 +295,15 @@ namespace Chess.Classes {
                 board.pieces.Remove(end);
                 board.pieces[start] = pieceMoved;
                 board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, start)] | ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceMoved, end)];
+                board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(pieceMoved, start));
+                board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(pieceMoved, end));
 
                 if(type == MoveType.PromoteQueen) {
                     bitboard['q'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = Pieces.GetPiece('q', WhiteMove);
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('q', WhiteMove), end));
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
@@ -275,6 +311,8 @@ namespace Chess.Classes {
                     bitboard['r'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = Pieces.GetPiece('r', WhiteMove);
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('r', WhiteMove), end));
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
@@ -282,6 +320,8 @@ namespace Chess.Classes {
                     bitboard['b'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = Pieces.GetPiece('b', WhiteMove);
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('b', WhiteMove), end));
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
@@ -289,6 +329,8 @@ namespace Chess.Classes {
                     bitboard['n'.GetPieceValue()] ^= 1ul << end;
                     bitboard['p'.GetPieceValue()] ^= 1ul << end;
                     int piece = Pieces.GetPiece('n', WhiteMove);
+                    board.ChangeQuality(WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('p', WhiteMove), end));
+                    board.ChangeQuality(WhiteMove, -Engine.GetSquarePoints(Pieces.GetPiece('n', WhiteMove), end));
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece, end)];
                     board.pieceCounts[piece]--;
                 }
@@ -297,7 +339,8 @@ namespace Chess.Classes {
                     if(epSquare.Item1 >= 0) {
                         int index = epSquare.Item2;
                         enemyBitboard['p'.GetPieceValue()] ^= 1ul << index;
-                        int piece = Pieces.GetPiece('p', !WhiteMove);;
+                        int piece = Pieces.GetPiece('p', !WhiteMove);
+                        board.ChangeQuality(!WhiteMove, Engine.GetSquarePoints(Pieces.GetPiece('p', !WhiteMove), index));
                         board.pieces[index] = piece;
                         board.pieceCounts[piece]++;
                     }
@@ -307,6 +350,7 @@ namespace Chess.Classes {
                     board.pieces[end] = pieceTaken;
                     board.pieceCounts[pieceTaken]++;
                     board.zobrist ^= ZobristHashing.keys[ZobristHashing.GetZobristIndex(pieceTaken, end)];
+                    board.ChangeQuality(!WhiteMove, Engine.GetSquarePoints(pieceTaken, end));
                 }
 
                 if(pieceMoved.GetPieceValue().GetPieceChar() == 'k')

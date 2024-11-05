@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System;
 using Chess.Utils;
 using Chess.Zobrist;
+using Chess.ChessEngine;
 
 namespace Chess.Classes {
     public class Board {
@@ -18,6 +19,12 @@ namespace Chess.Classes {
         public int[] kings = new int[2];
         public bool inCheck = false;
         public ulong zobrist = 0;
+
+        public int whiteQuality = 0;
+        public int blackQuality = 0;
+
+        public int lastWhiteMoved = 0, lastBlackMoved = 0;
+        public List<int> lastWhiteStack = [], lastBlackStack = [];
 
         public Dictionary<int, int> pieceCounts = new() {
             [Pieces.GetPiece('p', true)] = 0,
@@ -77,6 +84,7 @@ namespace Chess.Classes {
                     Dictionary<int, ulong> bitboards = GetBitboards(char.IsAsciiLetterUpper(chr));
                     bitboards[piece] |= 1ul << (63 - i);
                     pieces[63 - i] = piece | colour;
+                    ChangeQuality(char.IsAsciiLetterUpper(chr), Engine.GetSquarePoints(piece | colour, 63 - i));
                     pieceCounts[piece | colour]++;
                     zobrist |= ZobristHashing.keys[ZobristHashing.GetZobristIndex(piece | colour, 63 - i)];
                     if(char.ToLower(chr) == 'k')
@@ -87,6 +95,37 @@ namespace Chess.Classes {
 
                 i += 1;
             }
+        }
+
+        public void SetLastMoved(bool white, int lastMoved) {
+            if(white) {
+                lastWhiteStack.Add(lastWhiteMoved);
+                lastWhiteMoved = lastMoved;
+            }
+            else {
+                lastBlackStack.Add(lastBlackMoved);
+                lastBlackMoved = lastMoved;
+            }
+        }
+
+        public void ResetLastMoved(bool white) {
+            if(white) {
+                lastWhiteMoved = lastWhiteStack[^1];
+                lastWhiteStack.RemoveAt(lastWhiteStack.Count - 1);
+            }
+            else {
+                lastBlackMoved = lastBlackStack[^1];
+                lastBlackStack.RemoveAt(lastBlackStack.Count - 1);
+            }
+        }
+        
+        public int GetLastMoved(bool white) => white? lastWhiteMoved: lastBlackMoved;
+
+        public void ChangeQuality(bool white, int amount) {
+            if(white)
+                whiteQuality += amount;
+            else
+                blackQuality += amount;
         }
 
         public void SetCastlingRights(bool kingside, bool white, bool targetValue = false) {
